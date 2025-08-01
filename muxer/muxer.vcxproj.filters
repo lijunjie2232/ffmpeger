@@ -15,18 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\muxer.cpp">
+    <ClCompile Include="AudioVideoMerger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\AudioVideoMerger.cpp">
+    <ClCompile Include="muxer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\muxer.h">
+    <ClInclude Include="AudioVideoMerger.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\AudioVideoMerger.h">
+    <ClInclude Include="muxer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

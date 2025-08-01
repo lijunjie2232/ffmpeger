@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\AudioVideoMerger.cpp" />
-    <ClCompile Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\muxer.cpp" />
+    <ClCompile Include="AudioVideoMerger.cpp" />
+    <ClCompile Include="muxer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\AudioVideoMerger.h" />
-    <ClInclude Include="..\..\..\..\Videos\bilibili\src\muxer\muxer\muxer.h" />
+    <ClInclude Include="AudioVideoMerger.h" />
+    <ClInclude Include="muxer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
