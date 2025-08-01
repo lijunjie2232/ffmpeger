@@ -1,5 +1,6 @@
 #include "AudioVideoMerger.h"
 #include <iostream>
+#include <sstream>
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
@@ -17,6 +18,8 @@ AudioVideoMerger::~AudioVideoMerger() {
 }
 
 bool AudioVideoMerger::merge(const std::string& videoPath, const std::string& audioPath, const std::string& outputPath) {
+    lastError.clear();
+
     // 初始化FFmpeg库（在新版本中已弃用，但为了兼容性保留）
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
     av_register_all();
@@ -24,52 +27,51 @@ bool AudioVideoMerger::merge(const std::string& videoPath, const std::string& au
 
     // 打开视频文件
     if (openInputFile(videoPath, &videoFormatContext) < 0) {
-        std::cerr << "无法打开视频文件: " << videoPath << std::endl;
+        setError("Failed to open video file: " + videoPath);
         return false;
     }
 
     // 打开音频文件
     if (openInputFile(audioPath, &audioFormatContext) < 0) {
-        std::cerr << "无法打开音频文件: " << audioPath << std::endl;
+        setError("Failed to open audio file: " + audioPath);
         return false;
     }
 
     // 创建输出文件
     if (createOutputFile(outputPath) < 0) {
-        std::cerr << "无法创建输出文件: " << outputPath << std::endl;
+        setError("Failed to create output file: " + outputPath);
         return false;
     }
 
     // 复制视频流
     int videoStreamIndex = -1;
     if (copyStreams(videoFormatContext, &videoStreamIndex) < 0) {
-        std::cerr << "复制视频流失败" << std::endl;
+        setError("Failed to copy video streams");
         return false;
     }
 
     // 复制音频流
     int audioStreamIndex = -1;
     if (copyStreams(audioFormatContext, &audioStreamIndex) < 0) {
-        std::cerr << "复制音频流失败" << std::endl;
+        setError("Failed to copy audio streams");
         return false;
     }
 
     // 写入输出文件头部
     if (avformat_write_header(outputFormatContext, nullptr) < 0) {
-        std::cerr << "写入文件头部失败" << std::endl;
+        setError("Failed to write file header");
         return false;
     }
 
     // 读取并写入数据包
     if (!processPackets()) {
-        std::cerr << "处理数据包失败" << std::endl;
+        setError("Failed to process packets");
         return false;
     }
 
     // 写入文件尾部
     av_write_trailer(outputFormatContext);
 
-    std::cout << "音频和视频合并完成: " << outputPath << std::endl;
     return true;
 }
 

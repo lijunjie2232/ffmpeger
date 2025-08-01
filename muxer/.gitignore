@@ -1,0 +1,87 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# debug information files
+*.dwo
+
+.vs/
+
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]in/
+[Oo]bj/
+
+vs/
+
+*.log
+
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+sass-cache/
+
+__pycache__/
+*.pyc
+
+node_modules/
+
+*.azurePubxml
+PublishScripts/
+
+*.tmp
+*.bak
+*.swp
+
+
+build/
+dist/
+avmerger*/
+

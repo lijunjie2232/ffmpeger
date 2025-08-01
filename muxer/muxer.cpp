@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     std::string audioFile = "C:\\Users\\25335\\AppData\\Roaming\\bilibili-core\\cache\\test_a.m4s";
 
     // 输出合并后的视频文件路径
-    std::string outputFile = "C:\\Users\\25335\\AppData\\Roaming\\bilibili-core\\cache\\test.flv";
+    std::string outputFile = "C:\\Users\\25335\\AppData\\Roaming\\bilibili-core\\cache\\test.mp4";
 
     AudioVideoMerger merger;
     if (merger.merge(videoFile, audioFile, outputFile)) {
