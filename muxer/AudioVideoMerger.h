@@ -2,6 +2,7 @@
 #define AUDIO_VIDEO_MERGER_H
 
 #include <string>
+#include <vector>
 extern "C" {
 #include <libavformat/avformat.h>
 }
@@ -24,7 +25,15 @@ public:
      */
     bool merge(const std::string& videoPath, const std::string& audioPath, const std::string& outputPath);
 
+    /**
+     * 获取错误信息
+     * @return 最后的错误信息
+     */
+    std::string getLastError() const { return lastError; }
+
 private:
+    std::string lastError;
+
     /**
      * 打开输入文件
      * @param filename 文件路径
@@ -53,6 +62,12 @@ private:
      * @return 成功返回true，失败返回false
      */
     bool processPackets();
+
+    /**
+     * 设置错误信息
+     * @param error 错误信息
+     */
+    void setError(const std::string& error) { lastError = error; }
 };
 
 #endif // AUDIO_VIDEO_MERGER_H
