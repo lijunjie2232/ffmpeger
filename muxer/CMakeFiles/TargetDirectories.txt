@@ -1,0 +1,6 @@
+D:/code/c++/ffmpeger/muxer/CMakeFiles/avmerger_core.dir
+D:/code/c++/ffmpeger/muxer/CMakeFiles/avmerger.dir
+D:/code/c++/ffmpeger/muxer/CMakeFiles/prepare_wheel.dir
+D:/code/c++/ffmpeger/muxer/CMakeFiles/INSTALL.dir
+D:/code/c++/ffmpeger/muxer/CMakeFiles/ALL_BUILD.dir
+D:/code/c++/ffmpeger/muxer/CMakeFiles/ZERO_CHECK.dir

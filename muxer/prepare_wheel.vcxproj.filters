@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\code\c++\ffmpeger\muxer\CMakeFiles\3306aa20eed171a9e37bc2e737c923d4\prepare_wheel.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\code\c++\ffmpeger\muxer\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\code\c++\ffmpeger\muxer\CMakeFiles\prepare_wheel" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{EA7CC373-C021-33A0-82C4-4A43BF47D5E3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
