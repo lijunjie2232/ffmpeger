@@ -3,15 +3,17 @@
 
 #include <string>
 #include <vector>
-extern "C" {
+extern "C"
+{
 #include <libavformat/avformat.h>
 }
 
-class AudioVideoMerger {
+class AudioVideoMerger
+{
 private:
-    AVFormatContext* videoFormatContext = nullptr;
-    AVFormatContext* audioFormatContext = nullptr;
-    AVFormatContext* outputFormatContext = nullptr;
+    AVFormatContext *videoFormatContext = nullptr;
+    AVFormatContext *audioFormatContext = nullptr;
+    AVFormatContext *outputFormatContext = nullptr;
 
 public:
     ~AudioVideoMerger();
@@ -23,7 +25,7 @@ public:
      * @param outputPath 输出文件路径
      * @return 是否合并成功
      */
-    bool merge(const std::string& videoPath, const std::string& audioPath, const std::string& outputPath);
+    bool merge(const std::string &videoPath, const std::string &audioPath, const std::string &outputPath);
 
     /**
      * 获取错误信息
@@ -34,40 +36,52 @@ public:
 private:
     std::string lastError;
 
+    void printCodecInfo(AVFormatContext *formatContext, const std::string &fileName);
+    void printOutputCodecInfo();
+
     /**
      * 打开输入文件
      * @param filename 文件路径
      * @param formatContext 格式上下文指针
      * @return 成功返回0，失败返回负数
      */
-    int openInputFile(const std::string& filename, AVFormatContext** formatContext);
+    int openInputFile(const std::string &filename, AVFormatContext **formatContext);
 
     /**
      * 创建输出文件
      * @param filename 输出文件路径
      * @return 成功返回0，失败返回负数
      */
-    int createOutputFile(const std::string& filename);
+    int createOutputFile(const std::string &filename);
 
     /**
      * 复制流到输出文件
      * @param inputFormatCtx 输入格式上下文
-     * @param streamIndex 流索引
+     * @param streamIndexOffset 流索引偏移量
      * @return 成功返回0，失败返回负数
      */
-    int copyStreams(AVFormatContext* inputFormatCtx, int* streamIndex);
+    int copyOrCvtStreams(AVFormatContext *inputFormatCtx, int streamIndexOffset);
 
     /**
      * 处理并写入数据包
+     * @param audioStreamOffset 音频流索引偏移量
      * @return 成功返回true，失败返回false
      */
-    bool processPackets();
+    bool processPackets(int audioStreamOffset = 0);
 
     /**
      * 设置错误信息
      * @param error 错误信息
      */
-    void setError(const std::string& error) { lastError = error; }
+    void setError(const std::string &error) { lastError = error; }
+
+    /**
+     * 判断输入流是否兼容输出格式
+     * @param inStream 输入流
+     * @param outFormat 输出格式
+     * @return 兼容返回true，不兼容返回false
+     */
+    bool isStreamCompatible(AVStream* inStream, AVOutputFormat* outFormat)
 };
 
 #endif // AUDIO_VIDEO_MERGER_H
