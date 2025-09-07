@@ -3,7 +3,6 @@
 #include <sstream>
 extern "C"
 {
-#include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 }
@@ -217,21 +216,25 @@ int AudioVideoMerger::createOutputFile(const std::string &filename)
     return 0;
 }
 
-bool AudioVideoMerger::isStreamCompatible(AVStream* inStream, AVOutputFormat* outFormat) {
+bool AudioVideoMerger::isStreamCompatible(AVStream *inStream, const AVOutputFormat *outFormat)
+{
     // 1. 使用官方API检查
     int result = avformat_query_codec(outFormat, inStream->codecpar->codec_id, FF_COMPLIANCE_NORMAL);
-    if (result == 1) {
+    if (result == 1)
+    {
         return true;
     }
-    
+
     // 2. 检查编解码器标签支持
-    if (outFormat->codec_tag) {
+    if (outFormat->codec_tag)
+    {
         unsigned int tag = av_codec_get_tag(outFormat->codec_tag, inStream->codecpar->codec_id);
-        if (tag != 0) {
+        if (tag != 0)
+        {
             return true;
         }
     }
-    
+
     // 3. 特殊情况处理 - 某些格式可能需要转码
     // 例如用户可能想要强制转码以改变编码参数
     return false;
@@ -263,11 +266,190 @@ int AudioVideoMerger::copyOrCvtStreams(AVFormatContext *inputFormatCtx, int stre
         {
             // 需要转码 - 设置编解码器上下文
             // 这里需要实现实际的转码设置逻辑
-            if (setupTranscoding(inStream, outStream) < 0) {
+            if (setupTranscoding(inStream, outStream) < 0)
+            {
                 return -1;
             }
         }
     }
+
+    return 0;
+}
+
+int AudioVideoMerger::setupTranscoding(AVStream *inStream, AVStream *outStream)
+{
+    // Create decoder context
+    const AVCodec *decoder = avcodec_find_decoder(inStream->codecpar->codec_id);
+    if (!decoder)
+    {
+        std::cerr << "Failed to find decoder for codec ID: " << inStream->codecpar->codec_id << std::endl;
+        return -1;
+    }
+
+    AVCodecContext *decCodecCtx = avcodec_alloc_context3(decoder);
+    if (!decCodecCtx)
+    {
+        std::cerr << "Failed to allocate decoder context" << std::endl;
+        return -1;
+    }
+
+    // Copy parameters from input stream to decoder context
+    if (avcodec_parameters_to_context(decCodecCtx, inStream->codecpar) < 0)
+    {
+        std::cerr << "Failed to copy decoder parameters" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        return -1;
+    }
+
+    // Open decoder
+    if (avcodec_open2(decCodecCtx, decoder, nullptr) < 0)
+    {
+        std::cerr << "Failed to open decoder" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        return -1;
+    }
+
+    // Create encoder context
+    const AVCodec *encoder = nullptr;
+
+    // Choose appropriate encoder based on media type
+    if (inStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+    {
+        // For video, try to find a suitable encoder
+        // You can make this configurable based on your needs
+        encoder = avcodec_find_encoder_by_name("libx264"); // H.264
+        if (!encoder)
+        {
+            encoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+        }
+        if (!encoder)
+        {
+            encoder = avcodec_find_encoder(AV_CODEC_ID_MPEG4);
+        }
+    }
+    else if (inStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
+    {
+        // For audio, try to find a suitable encoder
+        encoder = avcodec_find_encoder_by_name("aac"); // AAC
+        if (!encoder)
+        {
+            encoder = avcodec_find_encoder(AV_CODEC_ID_AAC);
+        }
+        if (!encoder)
+        {
+            encoder = avcodec_find_encoder(AV_CODEC_ID_MP3);
+        }
+    }
+
+    if (!encoder)
+    {
+        std::cerr << "Failed to find suitable encoder" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        return -1;
+    }
+
+    AVCodecContext *encCodecCtx = avcodec_alloc_context3(encoder);
+    if (!encCodecCtx)
+    {
+        std::cerr << "Failed to allocate encoder context" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        return -1;
+    }
+
+    // Configure encoder based on media type
+    encCodecCtx->codec_type = inStream->codecpar->codec_type;
+    encCodecCtx->codec_id = encoder->id;
+    encCodecCtx->time_base = inStream->time_base;
+
+    if (encCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO)
+    {
+        // Video encoding parameters
+        encCodecCtx->width = inStream->codecpar->width;
+        encCodecCtx->height = inStream->codecpar->height;
+        encCodecCtx->sample_aspect_ratio = inStream->codecpar->sample_aspect_ratio;
+
+        // Choose pixel format
+        // 使用更现代的方法确定像素格式
+        #pragma warning(push)
+        #pragma warning(disable: 4996)
+        const enum AVPixelFormat* pix_fmts = encoder->pix_fmts;
+        #pragma warning(pop)
+        if (pix_fmts) {
+            encCodecCtx->pix_fmt = pix_fmts[0];
+        }
+        else {
+            encCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+        }
+
+        // Set common video encoding parameters
+        encCodecCtx->bit_rate = inStream->codecpar->bit_rate > 0 ? inStream->codecpar->bit_rate : 1000000;
+        encCodecCtx->gop_size = 12;
+        encCodecCtx->max_b_frames = 2;
+
+        // Set additional options for H.264
+        if (encCodecCtx->codec_id == AV_CODEC_ID_H264)
+        {
+            av_opt_set(encCodecCtx->priv_data, "preset", "fast", 0);
+        }
+    }
+    else if (encCodecCtx->codec_type == AVMEDIA_TYPE_AUDIO)
+    {
+        // Audio encoding parameters
+        encCodecCtx->sample_rate = inStream->codecpar->sample_rate;
+        encCodecCtx->channel_layout = inStream->codecpar->channel_layout;
+
+        if (encCodecCtx->channel_layout == 0)
+        {
+            encCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
+        }
+
+        encCodecCtx->channels = av_get_channel_layout_nb_channels(encCodecCtx->channel_layout);
+
+        // Choose sample format
+        if (encoder->sample_fmts)
+        {
+            encCodecCtx->sample_fmt = encoder->sample_fmts[0];
+        }
+        else
+        {
+            encCodecCtx->sample_fmt = AV_SAMPLE_FMT_FLTP;
+        }
+
+        // Set bitrate
+        encCodecCtx->bit_rate = inStream->codecpar->bit_rate > 0 ? inStream->codecpar->bit_rate : 128000;
+    }
+
+    // Open encoder
+    if (avcodec_open2(encCodecCtx, encoder, nullptr) < 0)
+    {
+        std::cerr << "Failed to open encoder" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        avcodec_free_context(&encCodecCtx);
+        return -1;
+    }
+
+    // Copy encoder parameters to output stream
+    if (avcodec_parameters_from_context(outStream->codecpar, encCodecCtx) < 0)
+    {
+        std::cerr << "Failed to copy encoder parameters to output stream" << std::endl;
+        avcodec_free_context(&decCodecCtx);
+        avcodec_free_context(&encCodecCtx);
+        return -1;
+    }
+
+    outStream->time_base = encCodecCtx->time_base;
+    outStream->codecpar->codec_tag = 0;
+
+    // Store codec contexts for later use in processPackets
+    // You'll need to add member variables to store these contexts
+    // For example:
+    decoderContexts[outStream->index] = decCodecCtx;
+    encoderContexts[outStream->index] = encCodecCtx;
+
+    // For now, we'll just free them since we don't have member variables yet
+    // In a complete implementation, you'd store these contexts
+    avcodec_free_context(&decCodecCtx);
+    avcodec_free_context(&encCodecCtx);
 
     return 0;
 }
