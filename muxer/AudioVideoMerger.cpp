@@ -251,8 +251,23 @@ int AudioVideoMerger::copyOrCvtStreams(AVFormatContext *inputFormatCtx, int stre
             return -1;
         }
 
+
+        // print input stream info and codec info
+
+        std::cout << "\n=== Start Input File Stream Information ===" << std::endl;
+        const AVCodec *codec = avcodec_find_decoder(inStream->codecpar->codec_id);
+        std::string codecName = codec ? codec->name : "Unknown";
+        std::cout << "Stream #" << i << " - " << "Video" << ": " << codecName << std::endl;
+        std::cout << "  Resolution: " << inStream->codecpar->width << "x" << inStream->codecpar->height << std::endl;
+        std::cout << "  Sample rate: " << inStream->codecpar->sample_rate << " Hz" << std::endl;
+        std::cout << "  Sample format: " << av_get_sample_fmt_name((AVSampleFormat)inStream->codecpar->format) << std::endl;
+        std::cout << "  Bit rate: " << (inStream->codecpar->bit_rate > 0 ? std::to_string(inStream->codecpar->bit_rate) + " bps" : "Unknown") << std::endl;
+        std::cout << "  Pixel format: " << av_get_pix_fmt_name((AVPixelFormat)inStream->codecpar->format) << std::endl;
+        std::cout << "\n=== End Input File Stream Information ===" << std::endl;
+
+        bool isCompatible = isStreamCompatible(inStream, outputFormatContext->oformat);
         // 正确的转码判断：基于编解码器兼容性而不是容器格式
-        if (isStreamCompatible(inStream, outputFormatContext->oformat))
+        if (isCompatible)
         {
             // 编解码器兼容，直接复制参数
             if (avcodec_parameters_copy(outStream->codecpar, inStream->codecpar) < 0)
@@ -261,9 +276,12 @@ int AudioVideoMerger::copyOrCvtStreams(AVFormatContext *inputFormatCtx, int stre
             }
             outStream->codecpar->codec_tag = 0;
             outStream->time_base = inStream->time_base;
+
+            std::cout << "Copying stream parameters for stream " << i << " to " << streamIndexOffset << std::endl;
         }
         else
         {
+            std::cout << "Transcoding stream " << i << std::endl;
             // 需要转码 - 设置编解码器上下文
             // 这里需要实现实际的转码设置逻辑
             if (setupTranscoding(inStream, outStream) < 0)
