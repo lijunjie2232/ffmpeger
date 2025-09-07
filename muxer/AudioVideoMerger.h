@@ -1,11 +1,13 @@
 ﻿#ifndef AUDIO_VIDEO_MERGER_H
 #define AUDIO_VIDEO_MERGER_H
 
+#include <map>
 #include <string>
 #include <vector>
 extern "C"
 {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 }
 
 class AudioVideoMerger
@@ -81,7 +83,14 @@ private:
      * @param outFormat 输出格式
      * @return 兼容返回true，不兼容返回false
      */
-    bool isStreamCompatible(AVStream* inStream, AVOutputFormat* outFormat)
+    bool isStreamCompatible(AVStream *inStream, const AVOutputFormat *outFormat);
+
+    /**
+     * 设置转码参数
+     */
+    std::map<int, AVCodecContext*> decoderContexts;
+    std::map<int, AVCodecContext*> encoderContexts;
+    int setupTranscoding(AVStream *inStream, AVStream *outStream);
 };
 
 #endif // AUDIO_VIDEO_MERGER_H

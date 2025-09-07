@@ -368,18 +368,19 @@ int AudioVideoMerger::setupTranscoding(AVStream *inStream, AVStream *outStream)
         encCodecCtx->height = inStream->codecpar->height;
         encCodecCtx->sample_aspect_ratio = inStream->codecpar->sample_aspect_ratio;
 
-        // Choose pixel format
-        // 使用更现代的方法确定像素格式
-        #pragma warning(push)
-        #pragma warning(disable: 4996)
-        const enum AVPixelFormat* pix_fmts = encoder->pix_fmts;
-        #pragma warning(pop)
-        if (pix_fmts) {
-            encCodecCtx->pix_fmt = pix_fmts[0];
+// Choose pixel format
+// 使用更现代的方法确定像素格式
+#pragma warning(push)
+#pragma warning(disable : 4996)
+        if (encoder->pix_fmts)
+        {
+            encCodecCtx->pix_fmt = encoder->pix_fmts[0];
         }
-        else {
+        else
+        {
             encCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
         }
+#pragma warning(pop)
 
         // Set common video encoding parameters
         encCodecCtx->bit_rate = inStream->codecpar->bit_rate > 0 ? inStream->codecpar->bit_rate : 1000000;
@@ -396,16 +397,21 @@ int AudioVideoMerger::setupTranscoding(AVStream *inStream, AVStream *outStream)
     {
         // Audio encoding parameters
         encCodecCtx->sample_rate = inStream->codecpar->sample_rate;
-        encCodecCtx->channel_layout = inStream->codecpar->channel_layout;
 
-        if (encCodecCtx->channel_layout == 0)
+        if (inStream->codecpar->ch_layout.nb_channels > 0)
         {
-            encCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
+            av_channel_layout_copy(&encCodecCtx->ch_layout, &inStream->codecpar->ch_layout);
+        }
+        else
+        {
+            av_channel_layout_default(&encCodecCtx->ch_layout, 2); // 默认立体声
         }
 
-        encCodecCtx->channels = av_get_channel_layout_nb_channels(encCodecCtx->channel_layout);
+// encCodecCtx->channels = encCodecCtx->ch_layout.nb_channels;
 
-        // Choose sample format
+// Choose sample format
+#pragma warning(push)
+#pragma warning(disable : 4996)
         if (encoder->sample_fmts)
         {
             encCodecCtx->sample_fmt = encoder->sample_fmts[0];
@@ -414,6 +420,7 @@ int AudioVideoMerger::setupTranscoding(AVStream *inStream, AVStream *outStream)
         {
             encCodecCtx->sample_fmt = AV_SAMPLE_FMT_FLTP;
         }
+#pragma warning(pop)
 
         // Set bitrate
         encCodecCtx->bit_rate = inStream->codecpar->bit_rate > 0 ? inStream->codecpar->bit_rate : 128000;
